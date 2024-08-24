@@ -1,0 +1,54 @@
+@import url(../index.css);
+
+.task {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background-color: var(--light-dark);
+  color: var(--dark-color);
+  /* box-shadow: 0 0 2px 0.5px var(--dark-light); */
+  border-radius: 3px;
+  padding: 8px;
+}
+
+.task input {
+  margin-right: 10px;
+  background-color: transparent;
+  width: 81%;
+  text-wrap: wrap;
+  text-align: justify;
+}
+
+.task button{
+  width: 80px;
+  padding: 8px;
+  border-radius: 2px;
+  background-color: var(--primary-color);
+  color: var(--dark-color);
+  cursor: pointer;
+  font-weight: bold;
+  
+}
+.task button#delete{
+  color:var(--light-color);
+  background-color: var(--dark-color);
+}
+
+.task button:hover{
+  background-color: var(--primary-trans);
+}
+
+.task button:active{
+  background-color: var(--primary-color);
+}
+
+@media (max-width:800px){
+  .task{
+    width: 96%;
+  }
+   
+  .task button{
+    width: 18%;
+  }
+}

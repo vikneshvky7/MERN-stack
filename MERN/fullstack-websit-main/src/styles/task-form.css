@@ -1,0 +1,45 @@
+@import url(../index.css);
+
+.task-form{
+    display: flex;
+    justify-content: space-between;
+    width: 450px;
+}
+.task-form input{
+    width: 350px;
+    padding: 10px;
+    outline: 1px solid var(--light-dark);
+    border-radius: 2px;
+    color: var(--dark-color);
+}
+
+.task-form button{
+    width: 80px;
+    padding: 10px;
+    border-radius: 2px;
+    background-color: var(--secondary-color);
+    color: var(--light-color);
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.task-form button:hover {
+    background-color: var(--secondary-light);
+}
+
+.task-form button:active{
+    background-color: var(--secondary-color);
+}
+
+@media(max-width:800px){
+    .task-form{
+        width: 96%;
+    }
+
+    .task-form input{
+        width:81%
+    }
+    .task-form button{
+        width: 18%;
+    }
+}
