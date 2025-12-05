@@ -1,2 +1,1 @@
-const API_URL = process.env.REACT_APP_API_URL;
-export{ API_URL};
+export const API_URL = "https://mern-todo-backend-xyw5.onrender.com";
