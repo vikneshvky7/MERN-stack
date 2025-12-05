@@ -1,118 +1,137 @@
-// const express = require("express");
-// const app = express();
-// app.use(express.json());
-// let todo = [];
-// app.post("/todo", async (req, res) => {
-//   const { title, description } = req.body;
-//   const newTodo = {
-//     id: todo.length + 1,
-//     title,
-//     description,
-//   };
-//   todo.push(newTodo);
-//   console.log(todo);
-//   res.status(201).json(newTodo);
-// });
-
-// //start the server
-// const port = 3000;
-// app.listen(port, () => {
-//   console.log("server is listeneing to port" + port);
-// });
-//-----------------------------------------------------server---------------------------------------------------
+// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const app = express();
-app.use(express.json());
-app.use(cors());
 
-// Connecting to MongoDB
+const app = express();
+
+// ====== CONFIG ======
+const PORT = process.env.PORT || 8000;
+
+// On Render / cloud: set MONGODB_URI in env vars
+// Locally it will fall back to your local MongoDB
+const MONGODB_URI =
+  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/mern-app";
+
+// ====== MIDDLEWARE ======
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000", // local React dev
+      "https://mern-stack-five-sigma.vercel.app", // your Vercel frontend
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
+
+app.use(express.json());
+
+// ====== DB CONNECTION ======
 mongoose
-  .connect("mongodb://localhost:27017/mern-app")
+  .connect(MONGODB_URI)
   .then(() => {
-    console.log("DB connected!");
+    console.log("✅ MongoDB connected");
   })
   .catch((err) => {
-    console.error(err);
+    console.error("❌ MongoDB connection error:", err.message);
   });
 
-// Creating the schema
-const todoSchema = new mongoose.Schema({
-  title: {
-    required: true,
-    type: String,
+// ====== SCHEMA & MODEL ======
+const todoSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+    },
   },
-  description: String,
+  { timestamps: true }
+);
+
+const Todo = mongoose.model("Todo", todoSchema);
+
+// ====== ROUTES ======
+
+// Health check / root
+app.get("/", (req, res) => {
+  res.json({ status: "ok", message: "Todo API is running" });
 });
 
-// Creating model
-const todoModel = mongoose.model("Todo", todoSchema);
-
-// Create a new todo item
+// Create a new todo
 app.post("/todo", async (req, res) => {
   const { title, description } = req.body;
+
+  if (!title || !title.trim()) {
+    return res.status(400).json({ message: "Title is required" });
+  }
+
   try {
-    const newTodo = new todoModel({ title, description });
+    const newTodo = new Todo({ title: title.trim(), description });
     await newTodo.save();
     res.status(201).json(newTodo);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
+    console.error("POST /todo error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-// Get all items
+// Get all todos
 app.get("/todo", async (req, res) => {
   try {
-    const todos = await todoModel.find();
+    const todos = await Todo.find().sort({ createdAt: 1 });
     res.json(todos);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
+    console.error("GET /todo error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-// Delete a todo item by ID
+// Delete a todo by ID
 app.delete("/todo/:id", async (req, res) => {
+  const { id } = req.params;
+
   try {
-    const id = req.params.id;
-    const result = await todoModel.findByIdAndDelete(id);
+    const result = await Todo.findByIdAndDelete(id);
+
     if (!result) {
-      res.status(404).json({ message: "Todo not found" });
-    } else {
-      console.log(result);
-      const data={result:result}
-      res.status(200).json(result);
-    
+      return res.status(404).json({ message: "Todo not found" });
     }
+
+    res.status(200).json({ message: "Todo deleted", todo: result });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
+    console.error("DELETE /todo/:id error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-// Update a todo item by ID
+// Update a todo by ID
 app.put("/todo/:id", async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body || {};
+
   try {
-    const id = req.params.id;
-    const updates = req.body; // This should be an object containing the fields to update
-    const result = await todoModel.findByIdAndUpdate(id, updates, {
-      new: true, // Return the updated document
-      runValidators: true, // Ensure the update is validated according to schema rules
+    const result = await Todo.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
     });
-    if (result) {
-      res.json(result);
-    } else {
-      res.status(404).json({ message: "Todo not found" });
+
+    if (!result) {
+      return res.status(404).json({ message: "Todo not found" });
     }
+
+    res.json(result);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
+    console.error("PUT /todo/:id error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-const port = 8000;
-app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
+// ====== START SERVER ======
+app.listen(PORT, () => {
+  console.log(`🚀 Server listening on port ${PORT}`);
 });
